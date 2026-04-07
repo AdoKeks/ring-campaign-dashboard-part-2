@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>In The Ring x Kevin Hart — Campaign Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #1a1a2e; }
+
+/* HEADER */
+.header {
+  background: linear-gradient(135deg, #5B21B6 0%, #4C1D95 100%);
+  color: white; padding: 0 28px; display: flex;
+  align-items: center; justify-content: space-between;
+  height: 64px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  position: sticky; top: 0; z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 14px; }
+.header-logo { width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; }
+.header-title { font-size: 17px; font-weight: 700; }
+.header-sub { font-size: 12px; opacity: 0.75; margin-top: 2px; }
+.header-date { background: rgba(255,255,255,0.2); border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; }
+
+/* CAMPAIGN SUMMARY CARD */
+.page { padding: 24px 28px; max-width: 1400px; margin: 0 auto; }
+
+.campaign-card {
+  background: white; border-radius: 16px; padding: 24px 28px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07); margin-bottom: 20px;
+}
+.campaign-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+.campaign-name { font-size: 22px; font-weight: 800; color: #1a1a2e; }
+.campaign-meta { display: flex; gap: 28px; }
+.campaign-meta-item { text-align: right; }
+.campaign-meta-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 2px; }
+.campaign-meta-value { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+
+.campaign-bottom { display: flex; align-items: flex-start; gap: 32px; }
+.platforms-section { flex-shrink: 0; }
+.platforms-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 10px; }
+.platform-icons { display: flex; gap: 8px; }
+.plat-badge { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.plat-ig { background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
+.plat-yt { background: #3B82F6; }
+
+.plat-tt { background: #22C55E; }
+
+.top-performers { flex: 1; overflow: hidden; }
+.performers-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 10px; }
+.performers-shelf { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+.performers-shelf::-webkit-scrollbar { height: 4px; }
+.performers-shelf::-webkit-scrollbar-track { background: #f0f2f5; border-radius: 2px; }
+.performers-shelf::-webkit-scrollbar-thumb { background: #d0d5dd; border-radius: 2px; }
+.performer-chip {
+  flex-shrink: 0; display: flex; align-items: center; gap: 8px;
+  background: #f8f9fa; border-radius: 10px; padding: 8px 12px;
+  border: 1px solid #e8ecef;
+}
+.performer-rank { width: 20px; height: 20px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: white; flex-shrink: 0; }
+.rank-1 { background: #F59E0B; }
+.rank-2 { background: #9CA3AF; }
+.rank-3 { background: #C2855A; }
+.rank-other { background: #4C1D95; }
+.performer-info { display: flex; flex-direction: column; }
+.performer-handle { font-size: 12px; font-weight: 700; color: #1a1a2e; }
+.performer-views { font-size: 11px; color: #888; }
+.performer-plat { width: 18px; height: 18px; border-radius: 5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+/* SUB-TABS */
+.sub-tabs { display: flex; gap: 6px; margin-bottom: 20px; }
+.sub-tab {
+  padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600;
+  cursor: pointer; border: none; background: white;
+  color: #6D28D9; border: 2px solid #e8ecef; transition: all 0.15s;
+}
+.sub-tab.active { background: #6D28D9; color: white; border-color: #6D28D9; }
+.sub-tab:hover:not(.active) { border-color: #6D28D9; }
+
+/* TAB PANELS */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* STAT CARDS */
+.stat-card { background: white; border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 14px; }
+.stat-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.stat-icon svg { width: 16px; height: 16px; }
+.stat-text { display: flex; flex-direction: column; }
+.stat-label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 2px; }
+.stat-value { font-size: 20px; font-weight: 800; margin-bottom: 1px; }
+.stat-sub { font-size: 11px; color: #aaa; }
+
+/* CHARTS */
+.chart-card { background: white; border-radius: 14px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.chart-title { font-size: 15px; font-weight: 700; margin-bottom: 20px; color: #1a1a2e; }
+
+/* SUMMARY LAYOUT */
+.summary-layout { display: flex; gap: 20px; align-items: stretch; margin-bottom: 20px; }
+.summary-stats-cluster { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; flex: 1; align-content: space-between; }
+.stat-card-wide { grid-column: 1 / -1; }
+.summary-donut-card { flex-shrink: 0; width: 500px; display: flex; flex-direction: column; }
+.summary-donut-inner { display: flex; align-items: center; gap: 28px; flex: 1; }
+.summary-donut-legend { display: flex; flex-direction: column; gap: 18px; flex: 1; }
+.legend-item { display: flex; align-items: center; justify-content: space-between; }
+.legend-left { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #555; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.legend-right { display: flex; gap: 10px; align-items: baseline; }
+.legend-val { font-size: 14px; font-weight: 700; }
+.legend-pct { font-size: 12px; color: #999; }
+
+/* SUMMARY TOP LIST */
+.summary-list-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f5f6f8; }
+.summary-list-row:last-child { border-bottom: none; }
+.summary-list-rank { width: 24px; height: 24px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: white; flex-shrink: 0; }
+.summary-list-info { flex: 1; min-width: 0; }
+.summary-list-handle { font-size: 13px; font-weight: 700; color: #1a1a2e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.summary-list-sub { font-size: 11px; color: #aaa; margin-top: 1px; }
+.summary-list-views { font-size: 14px; font-weight: 800; color: #1a1a2e; text-align: right; flex-shrink: 0; }
+.summary-list-plat { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+/* ANALYTICS TAB */
+.analytics-top { margin-bottom: 20px; }
+.platform-table { width: 100%; border-collapse: collapse; }
+.platform-table th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #aab; font-weight: 600; padding: 10px 18px; border-bottom: 1px solid #f0f2f5; text-align: left; }
+.platform-table td { padding: 18px 18px; border-bottom: 1px solid #f5f6f8; font-size: 14px; font-weight: 500; }
+.platform-table tr:last-child td { border-bottom: none; }
+.platform-table tbody tr:hover td { background: #fafbfc; }
+.plat-cell { display: flex; align-items: center; gap: 12px; }
+.plat-icon-wrap { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.plat-name { font-weight: 600; font-size: 15px; color: #1a1a2e; }
+.td-avg { color: #b0b8c9; font-weight: 500; }
+.td-eng { color: #22C55E; font-weight: 700; }
+.td-num { font-weight: 600; color: #1a1a2e; }
+
+.analytics-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.eng-chart-wrap { height: 260px; }
+.posts-dist-inner { display: flex; align-items: center; gap: 24px; }
+.posts-dist-canvas { flex-shrink: 0; }
+.posts-dist-legend { display: flex; flex-direction: column; gap: 12px; }
+.dist-legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #555; }
+.dist-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* TOP POSTS TAB */
+.posts-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+.post-card {
+  background: white; border-radius: 14px; padding: 18px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06); transition: box-shadow 0.15s;
+}
+.post-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+.post-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.post-rank-info { display: flex; align-items: center; gap: 8px; }
+.post-rank { width: 26px; height: 26px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: white; flex-shrink: 0; }
+.post-username { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px; }
+.post-plat { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.post-views { font-size: 22px; font-weight: 800; margin-bottom: 2px; }
+.post-views-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 14px; }
+.post-stats { display: flex; gap: 14px; }
+.post-stat { display: flex; flex-direction: column; }
+.post-stat-val { font-size: 13px; font-weight: 700; }
+.post-stat-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 0.3px; }
+.post-link { display: block; margin-top: 14px; font-size: 11px; color: #6D28D9; text-decoration: none; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.post-link:hover { text-decoration: underline; }
+.fraud-badge { font-size: 10px; background: #FEF3C7; color: #B45309; border-radius: 4px; padding: 2px 6px; font-weight: 600; display: inline-block; margin-top: 6px; }
+
+@media (max-width: 1100px) {
+  .stat-grid { grid-template-columns: repeat(3, 1fr); }
+  .posts-grid { grid-template-columns: repeat(3, 1fr); }
+  .charts-row { grid-template-columns: 1fr; }
+  .analytics-grid { grid-template-columns: 1fr; }
+  .analytics-bottom { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">R</div>
+    <div>
+      <div class="header-title">Ring Campaign Performance Dashboard</div>
+      <div class="header-sub">Creator Marketing Analytics</div>
+    </div>
+  </div>
+  <div class="header-date">Monday, April 6, 2026</div>
+</div>
+
+<div class="page">
+
+  <!-- CAMPAIGN SUMMARY CARD -->
+  <div class="campaign-card">
+    <div class="campaign-top">
+      <div class="campaign-name">In The Ring x Kevin Hart</div>
+      <div class="campaign-meta">
+        <div class="campaign-meta-item">
+          <div class="campaign-meta-label">Date Range</div>
+          <div class="campaign-meta-value">Feb 26, 2026</div>
+        </div>
+      </div>
+    </div>
+    <div class="campaign-bottom">
+      <div class="platforms-section">
+        <div class="platforms-label">Platforms</div>
+        <div class="platform-icons">
+          <div class="plat-badge plat-ig">
+            <svg width="16" height="16" fill="white" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+          </div>
+          <div class="plat-badge plat-yt">
+            <svg width="16" height="16" fill="white" viewBox="0 0 24 24"><path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="top-performers">
+        <div class="performers-label">Top Performers</div>
+        <div class="performers-shelf" id="performersShelf"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUB-TABS -->
+  <div class="sub-tabs">
+    <button class="sub-tab active" onclick="switchTab('summary')">Summary</button>
+    <button class="sub-tab" onclick="switchTab('analytics')">Analytics</button>
+    <button class="sub-tab" onclick="switchTab('topposts')">Top Posts</button>
+  </div>
+
+  <!-- SUMMARY TAB -->
+  <div class="tab-panel active" id="tab-summary">
+    <div class="summary-layout">
+      <div class="summary-stats-cluster" id="statCluster"></div>
+      <div class="chart-card summary-donut-card">
+        <div class="chart-title">Views Distribution</div>
+        <div class="summary-donut-inner">
+          <canvas id="donutChart" width="200" height="200" style="max-width:200px;max-height:200px;flex-shrink:0;"></canvas>
+          <div class="summary-donut-legend" id="donutLegend"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANALYTICS TAB -->
+  <div class="tab-panel" id="tab-analytics">
+    <div class="analytics-top">
+      <div class="chart-card">
+        <div class="chart-title">Platform Comparison</div>
+        <table class="platform-table">
+          <thead>
+            <tr>
+              <th>Platform</th>
+              <th>Posts</th>
+              <th>Views</th>
+              <th>Avg Views</th>
+              <th>Likes</th>
+              <th>Comments</th>
+              <th>Eng. Rate</th>
+            </tr>
+          </thead>
+          <tbody id="platformTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="analytics-bottom">
+      <div class="chart-card">
+        <div class="chart-title">Engagement by Platform</div>
+        <div class="eng-chart-wrap">
+          <canvas id="engBarChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Posts Distribution</div>
+        <div class="posts-dist-inner">
+          <div class="posts-dist-canvas">
+            <canvas id="postsDonut" width="220" height="220"></canvas>
+          </div>
+          <div class="posts-dist-legend" id="postsDonutLegend"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOP POSTS TAB -->
+  <div class="tab-panel" id="tab-topposts">
+    <div class="posts-grid" id="postsGrid"></div>
+  </div>
+
+</div>
+
+<script>
+/* ---- DATA ---- */
+const PLATFORMS = {
+  instagram: { color: '#E1306C', label: 'Instagram' },
+  youtube:   { color: '#3B82F6', label: 'YouTube' },
+  tiktok:    { color: '#22C55E', label: 'TikTok' }
+};
+
+const allPosts = [
+  { platform:'instagram', username:'artistpix',              display:'Artistpix',                          url:'https://www.instagram.com/reel/DVNu2O2iPiD/',  views:1975476, likes:3876,  comments:136, fraud:false },
+  { platform:'instagram', username:'unexpectedmemee',        display:'Unexpected Singing',                 url:'https://www.instagram.com/reel/DVNiKntEUiE/', views:1119438, likes:5711,  comments:38,  fraud:true  },
+  { platform:'instagram', username:'unexpectedmemee',        display:'Unexpected Singing',                 url:'https://www.instagram.com/reel/DVNjafOEZOs/', views:524339,  likes:1427,  comments:7,   fraud:false },
+  { platform:'instagram', username:'crazybitchprobs',        display:'Tiff Leitz',                         url:'https://www.instagram.com/reel/DVM-t9hDuBl/', views:509728,  likes:2094,  comments:25,  fraud:false },
+  { platform:'instagram', username:'unexpectedmemee',        display:'Unexpected Singing',                 url:'https://www.instagram.com/reel/DVNgPaLkder/', views:489440,  likes:1920,  comments:12,  fraud:false },
+  { platform:'instagram', username:'interestingasfacts',     display:'Interesting As Facts',               url:'https://www.instagram.com/reel/DVNhIYkiOPg/', views:447702,  likes:1966,  comments:57,  fraud:false },
+  { platform:'instagram', username:'nochillbart',            display:'Memes',                              url:'https://www.instagram.com/reel/DVNssrwjVop/', views:412193,  likes:2527,  comments:16,  fraud:false },
+  { platform:'instagram', username:'disneyfeel.s',           display:'Disney Posts & Videos',              url:'https://www.instagram.com/reel/DVNBV--CBCD/', views:387289,  likes:5411,  comments:48,  fraud:false },
+  { platform:'instagram', username:'hellyeah.explosion',     display:'HELL YEAH',                          url:'https://www.instagram.com/reel/DVM8cb0Eg2S/', views:367340,  likes:518,   comments:1,   fraud:false },
+  { platform:'instagram', username:'scaryheight',            display:'Fall From Height',                   url:'https://www.instagram.com/p/DVNGPIwiBH8/',    views:366054,  likes:1576,  comments:6,   fraud:true  },
+  { platform:'instagram', username:'hoodmemeez',             display:'Best Hood Memes',                    url:'https://www.instagram.com/reel/DVNs6srgRyO/', views:363724,  likes:3639,  comments:27,  fraud:false },
+  { platform:'instagram', username:'puppy.lovings',          display:"Puppy Loving's",                     url:'https://www.instagram.com/reel/DVNpUHyiPEP/', views:359529,  likes:1413,  comments:16,  fraud:true  },
+  { platform:'instagram', username:'sogoodsoogood',          display:'Wholesome Reels Memes',              url:'https://www.instagram.com/reel/DVM5eRvCLPB/', views:310105,  likes:1973,  comments:4,   fraud:true  },
+  { platform:'instagram', username:'ihaveamemenow',          display:'ihaveamemenow',                      url:'https://www.instagram.com/reel/DVM6oiUACrU/', views:288585,  likes:753,   comments:1,   fraud:true  },
+  { platform:'instagram', username:'disneyfeel.s',           display:'Disney Posts & Videos',              url:'https://www.instagram.com/reel/DVM7G7OiP3m/', views:278594,  likes:1719,  comments:2,   fraud:false },
+  { platform:'instagram', username:'fboy',                   display:'FBOY',                               url:'https://www.instagram.com/reel/DVNMLUMCGlb/', views:272955,  likes:4196,  comments:14,  fraud:false },
+  { platform:'instagram', username:'unexpectedmemee',        display:'Unexpected Singing',                 url:'https://www.instagram.com/reel/DVNkyu-EZKE/', views:256335,  likes:2211,  comments:5,   fraud:false },
+  { platform:'instagram', username:'puppy.lovings',          display:"Puppy Loving's",                     url:'https://www.instagram.com/reel/DVNtVGrCPn7/', views:252889,  likes:374,   comments:1,   fraud:false },
+  { platform:'instagram', username:'scaryvidss',             display:'Accepting Follows Now',              url:'https://www.instagram.com/reel/DVNaL8fkucv/', views:246786,  likes:3635,  comments:14,  fraud:true  },
+  { platform:'instagram', username:'howhistorylives',        display:'How History Lives',                  url:'https://www.instagram.com/reel/DVNi4fdAKII/', views:244824,  likes:1085,  comments:31,  fraud:false },
+  { platform:'instagram', username:'figure_skating_addicts', display:'Figure Skating',                    url:'https://www.instagram.com/reel/DVM2aXKDMB2/', views:242480,  likes:1405,  comments:5,   fraud:false },
+  { platform:'instagram', username:'fboy',                   display:'FBOY',                               url:'https://www.instagram.com/reel/DVM1USWjL0D/', views:241826,  likes:1530,  comments:17,  fraud:true  },
+  { platform:'instagram', username:'crazybitchprobs',        display:'Tiff Leitz',                         url:'https://www.instagram.com/p/DVM8QnqDuoo/',    views:240694,  likes:648,   comments:2,   fraud:false },
+  { platform:'instagram', username:'lifestyledeluxes',       display:'Lifestyle Deluxes',                  url:'https://www.instagram.com/reel/DVN3a3nkvbU/', views:215723,  likes:674,   comments:7,   fraud:false },
+  { platform:'instagram', username:'wrestlingmomentsus',     display:'Wrestling Moments',                  url:'https://www.instagram.com/p/DVNEscQCAvq/',    views:201086,  likes:523,   comments:7,   fraud:true  },
+];
+
+/* Full campaign totals (computed from all 371 posts) */
+const TOTALS = {
+  posts: 371,
+  igPosts: 323,
+  ytPosts: 48,
+  views: 22790252,
+  likes: 113980,
+  comments: 1159,
+  igViews: 22735366,
+  ytViews: 54886,
+  igLikes: 113048,
+  ytLikes: 932,
+  igComments: 1150,
+  ytComments: 9,
+};
+TOTALS.engagement = ((TOTALS.likes + TOTALS.comments) / TOTALS.views * 100).toFixed(2);
+TOTALS.igEng = ((TOTALS.igLikes + TOTALS.igComments) / TOTALS.igViews * 100).toFixed(2);
+TOTALS.ytEng = ((TOTALS.ytLikes + TOTALS.ytComments) / TOTALS.ytViews * 100).toFixed(2);
+TOTALS.igAvg = Math.round(TOTALS.igViews / TOTALS.igPosts);
+TOTALS.ytAvg = Math.round(TOTALS.ytViews / TOTALS.ytPosts);
+
+/* ---- HELPERS ---- */
+function fmt(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(2) + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+  return n.toLocaleString();
+}
+function fmtFull(n) { return n.toLocaleString(); }
+
+function platIcon(p, size = 16) {
+  if (p === 'instagram') return `<svg width="${size}" height="${size}" fill="white" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>`;
+  if (p === 'youtube') return `<svg width="${size}" height="${size}" fill="white" viewBox="0 0 24 24"><path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>`;
+  return `<svg width="${size}" height="${size}" fill="white" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.28 6.28 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.19 8.19 0 004.79 1.54V6.78a4.85 4.85 0 01-1.02-.09z"/></svg>`;
+}
+
+function platBgStyle(p) {
+  if (p === 'instagram') return 'background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);';
+  if (p === 'youtube') return 'background: #3B82F6;';
+  return 'background: #22C55E;';
+}
+
+/* ---- TABS ---- */
+const analyticsInited = { done: false };
+function switchTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  document.querySelectorAll('.sub-tab').forEach(b => {
+    if (b.getAttribute('onclick').includes(id)) b.classList.add('active');
+  });
+  if (id === 'analytics' && !analyticsInited.done) {
+    analyticsInited.done = true;
+    initAnalyticsCharts();
+  }
+}
+
+/* ---- TOP PERFORMERS SHELF ---- */
+const top10 = allPosts.slice(0, 10);
+const shelf = document.getElementById('performersShelf');
+top10.forEach((p, i) => {
+  const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-other';
+  shelf.innerHTML += `
+    <div class="performer-chip">
+      <div class="performer-rank ${rankClass}">${i+1}</div>
+      <div class="performer-info">
+        <div class="performer-handle">@${p.username}</div>
+        <div class="performer-views">${fmt(p.views)} views</div>
+      </div>
+      <div class="performer-plat" style="${platBgStyle(p.platform)}">${platIcon(p.platform, 12)}</div>
+    </div>`;
+});
+
+/* ---- STAT CARDS ---- */
+const stats = [
+  { icon: '#3B82F6', label: 'Total Views',    value: fmt(TOTALS.views),    sub: fmtFull(TOTALS.views) + ' views',
+    svg: '<svg width="20" height="20" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' },
+  { icon: '#8B5CF6', label: 'Total Posts',    value: TOTALS.posts,         sub: TOTALS.igPosts + ' IG  ·  ' + TOTALS.ytPosts + ' YT',
+    svg: '<svg width="20" height="20" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>' },
+  { icon: '#EC4899', label: 'Total Likes',    value: fmt(TOTALS.likes),    sub: fmtFull(TOTALS.likes) + ' likes',
+    svg: '<svg width="20" height="20" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' },
+  { icon: '#F59E0B', label: 'Comments',       value: fmt(TOTALS.comments), sub: fmtFull(TOTALS.comments) + ' comments',
+    svg: '<svg width="20" height="20" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' },
+  { icon: '#22C55E', label: 'Engagement',     value: TOTALS.engagement + '%', sub: 'avg across all posts',
+    svg: '<svg width="20" height="20" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>' },
+];
+// Order: Views, Posts, Likes, Comments, Engagement(wide bottom)
+const cluster = document.getElementById('statCluster');
+[0, 1, 2, 3, 4].forEach(i => {
+  const s = stats[i];
+  const wide = i === 4 ? ' stat-card-wide' : '';
+  cluster.innerHTML += `
+    <div class="stat-card${wide}">
+      <div class="stat-icon" style="background:${s.icon}">${s.svg}</div>
+      <div class="stat-text">
+        <div class="stat-label">${s.label}</div>
+        <div class="stat-value">${s.value}</div>
+        <div class="stat-sub">${s.sub}</div>
+      </div>
+    </div>`;
+});
+
+/* ---- VIEWS DISTRIBUTION DONUT ---- */
+const dCtx = document.getElementById('donutChart').getContext('2d');
+new Chart(dCtx, {
+  type: 'doughnut',
+  data: {
+    labels: ['Instagram', 'YouTube'],
+    datasets: [{ data: [TOTALS.igViews, TOTALS.ytViews], backgroundColor: ['#E1306C', '#3B82F6'], borderWidth: 0 }]
+  },
+  options: {
+    cutout: '72%',
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + fmt(ctx.raw) + ' views' } } },
+    animation: { animateRotate: true }
+  }
+});
+const totalV = TOTALS.igViews + TOTALS.ytViews;
+document.getElementById('donutLegend').innerHTML = `
+  <div class="legend-item">
+    <div class="legend-left"><div class="legend-dot" style="background:#E1306C;width:12px;height:12px;"></div><span style="font-weight:600;font-size:14px;">Instagram</span></div>
+    <div class="legend-right"><span class="legend-val" style="font-size:15px;">${fmt(TOTALS.igViews)}</span><span class="legend-pct">${(TOTALS.igViews/totalV*100).toFixed(1)}%</span></div>
+  </div>
+  <div class="legend-item">
+    <div class="legend-left"><div class="legend-dot" style="background:#3B82F6;width:12px;height:12px;"></div><span style="font-weight:600;font-size:14px;">YouTube</span></div>
+    <div class="legend-right"><span class="legend-val" style="font-size:15px;">${fmt(TOTALS.ytViews)}</span><span class="legend-pct">${(TOTALS.ytViews/totalV*100).toFixed(1)}%</span></div>
+  </div>`;
+
+
+
+/* ---- ANALYTICS CHARTS (deferred until tab is shown) ---- */
+function initAnalyticsCharts() {
+const platforms = [
+  { key: 'instagram', label: 'Instagram', color: '#E1306C', iconBg: '#FFF0F5', posts: TOTALS.igPosts, views: TOTALS.igViews, avg: TOTALS.igAvg, likes: TOTALS.igLikes, comments: TOTALS.igComments, eng: TOTALS.igEng },
+  { key: 'youtube',   label: 'YouTube',   color: '#3B82F6', iconBg: '#EFF6FF', posts: TOTALS.ytPosts, views: TOTALS.ytViews, avg: TOTALS.ytAvg, likes: TOTALS.ytLikes, comments: TOTALS.ytComments, eng: TOTALS.ytEng },
+];
+const tbody = document.getElementById('platformTableBody');
+platforms.forEach(p => {
+  const iconSvg = platIcon(p.key, 18);
+  const iconStyle = p.key === 'instagram'
+    ? 'background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);'
+    : `background: ${p.color};`;
+  tbody.innerHTML += `
+    <tr>
+      <td>
+        <div class="plat-cell">
+          <div class="plat-icon-wrap" style="${iconStyle}">${iconSvg}</div>
+          <span class="plat-name">${p.label}</span>
+        </div>
+      </td>
+      <td class="td-num">${p.posts.toLocaleString()}</td>
+      <td class="td-num">${fmt(p.views)}</td>
+      <td class="td-avg">${fmt(p.avg)}</td>
+      <td class="td-num">${fmt(p.likes)}</td>
+      <td class="td-num">${p.comments.toLocaleString()}</td>
+      <td class="td-eng">${p.eng}%</td>
+    </tr>`;
+});
+
+/* ---- ANALYTICS: ENGAGEMENT BAR CHART ---- */
+const engCtx = document.getElementById('engBarChart').getContext('2d');
+new Chart(engCtx, {
+  type: 'bar',
+  data: {
+    labels: platforms.map(p => p.label),
+    datasets: [{
+      data: platforms.map(p => parseFloat(p.eng)),
+      backgroundColor: platforms.map(p => p.color + 'CC'),
+      borderColor: platforms.map(p => p.color),
+      borderWidth: 1,
+      borderRadius: 6,
+      barThickness: 60,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ' ' + ctx.raw + '%' } }
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { size: 13 }, color: '#666' } },
+      y: {
+        grid: { color: '#f0f2f5' },
+        ticks: { callback: v => v.toFixed(1) + '%', font: { size: 11 }, color: '#aaa' },
+        beginAtZero: true,
+      }
+    }
+  }
+});
+
+/* ---- ANALYTICS: POSTS DISTRIBUTION DONUT ---- */
+const pdCtx = document.getElementById('postsDonut').getContext('2d');
+new Chart(pdCtx, {
+  type: 'doughnut',
+  data: {
+    labels: platforms.map(p => p.label),
+    datasets: [{ data: platforms.map(p => p.posts), backgroundColor: platforms.map(p => p.color), borderWidth: 0 }]
+  },
+  options: {
+    cutout: '60%',
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + ctx.raw + ' posts' } } }
+  }
+});
+const postsLegend = document.getElementById('postsDonutLegend');
+platforms.forEach(p => {
+  postsLegend.innerHTML += `
+    <div class="dist-legend-item">
+      <div class="dist-dot" style="background:${p.color}"></div>
+      ${p.label}
+    </div>`;
+});
+} /* end initAnalyticsCharts */
+
+/* ---- TOP POSTS GRID ---- */
+const postsGrid = document.getElementById('postsGrid');
+allPosts.forEach((p, i) => {
+  const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-other';
+  postsGrid.innerHTML += `
+    <div class="post-card">
+      <div class="post-card-header">
+        <div class="post-rank-info">
+          <div class="post-rank ${rankClass}">${i+1}</div>
+          <div class="post-username">@${p.username}</div>
+        </div>
+        <div class="post-plat" style="${platBgStyle(p.platform)}">${platIcon(p.platform, 12)}</div>
+      </div>
+      <div class="post-views">${fmt(p.views)}</div>
+      <div class="post-views-label">Views</div>
+      <div class="post-stats">
+        <div class="post-stat">
+          <div class="post-stat-val">${fmt(p.likes)}</div>
+          <div class="post-stat-label">Likes</div>
+        </div>
+        <div class="post-stat">
+          <div class="post-stat-val">${p.comments}</div>
+          <div class="post-stat-label">Comments</div>
+        </div>
+        <div class="post-stat">
+          <div class="post-stat-val">${((p.likes + p.comments) / p.views * 100).toFixed(2)}%</div>
+          <div class="post-stat-label">Eng.</div>
+        </div>
+      </div>
+      <a class="post-link" href="${p.url}" target="_blank">${p.url.replace('https://','')}</a>
+    </div>`;
+});
+</script>
+</body>
+</html>
